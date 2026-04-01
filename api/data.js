@@ -1,15 +1,17 @@
 export default async function handler(req, res) {
-  const GAS_URL = "https://script.google.com/macros/s/AKfycbzuQ1JVabLW4uQLqU4DJQ3cvLXA4xqxNaOVDFTlTosTyMIklYuWg8l63iay9zoBxwH9/exec";
-  
+  const SHEET_ID = "1-bkxKUS6MV2yWkZ2O6k3g0yDUoEZl371TnnV9ttagjw";
+  const url = `https://docs.google.com/spreadsheets/d/${SHEET_ID}/gviz/tq?tqx=out:json&sheet=Disney%E4%BA%BA%E7%89%A9%E7%B4%A2%E5%BC%95`;
+
   try {
-    const response = await fetch(GAS_URL, {
-      redirect: 'follow',
-      headers: { 'Accept': 'application/json' }
-    });
+    const response = await fetch(url);
     const text = await response.text();
+    const json = JSON.parse(text.match(/google\.visualization\.Query\.setResponse\((.*)\)/s)[1]);
+    const cols = json.table.cols.map(c => c.label);
+    const rows = json.table.rows
+      .filter(r => r.c && r.c[0]?.v)
+      .map(r => Object.fromEntries(cols.map((c, i) => [c, r.c[i]?.v ?? ""])));
     res.setHeader('Access-Control-Allow-Origin', '*');
-    res.setHeader('Content-Type', 'application/json');
-    res.status(200).send(text);
+    res.json(rows);
   } catch (error) {
     res.status(500).json({ error: error.message });
   }
