@@ -1,6 +1,6 @@
 import { useState, useMemo, useEffect } from "react";
 
-const GAS_URL = "https://script.google.com/macros/s/AKfycbzuQ1JVabLW4uQLqU4DJQ3cvLXA4xqxNaOVDFTlTosTyMIklYuWg8l63iay9zoBxwH9/exec";
+const GAS_URL = "/api/data";
 
 const RANK_CFG = {
   S:{label:"S — 本人肉声",bg:"#FFF3E0",border:"#E65100",text:"#E65100",pill:"#FFD0A0"},
