@@ -5,13 +5,10 @@ export default async function handler(req, res) {
   try {
     const response = await fetch(url);
     const text = await response.text();
-    const json = JSON.parse(text.match(/google\.visualization\.Query\.setResponse\((.*)\)/s)[1]);
-    const cols = json.table.cols.map(c => c.label);
-    const rows = json.table.rows
-      .filter(r => r.c && r.c[0]?.v)
-      .map(r => Object.fromEntries(cols.map((c, i) => [c, r.c[i]?.v ?? ""])));
+    // まず生テキストをそのまま返して確認
     res.setHeader('Access-Control-Allow-Origin', '*');
-    res.json(rows);
+    res.setHeader('Content-Type', 'text/plain');
+    res.status(200).send(text.slice(0, 500)); // 最初の500文字だけ
   } catch (error) {
     res.status(500).json({ error: error.message });
   }
