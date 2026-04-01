@@ -55,7 +55,7 @@ export default function App() {
 
   const fetchData = () => {
     setLoading(true); setError(null);
-    fetch(GAS_URL)
+    fetch("/api/data")
       .then(r => r.json())
       .then(rows => {
         const data = rows.map(normalizeRow).filter(r => r.id && r.id !== "ID" && String(r.id).trim());
