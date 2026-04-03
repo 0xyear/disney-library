@@ -1,6 +1,8 @@
 import { useState, useMemo, useEffect } from "react";
 
 const GAS_URL = "/api/data";
+const WRITE_GAS_URL = "https://script.google.com/macros/s/AKfycbwXaigGPPn38K0N5ZbNTAlGQR4HqaYWenzcqMKu-SfoELaFBCEqWLAyJehlNuNeXMA4/exec";
+
 const RANK_CFG = {
   S:{label:"S — 本人肉声",bg:"#FFF3E0",border:"#E65100",text:"#E65100",pill:"#FFD0A0"},
   A:{label:"A — 直接引用",bg:"#E8F5E9",border:"#2E7D32",text:"#1B5E20",pill:"#A5D6A7"},
@@ -38,6 +40,7 @@ function normalizeRow(row) {
     "信頼度\n(S/A/B/C)":"rank","信頼度\r\n(S/A/B/C)":"rank","信頼度(S/A/B/C)":"rank",
     "人物の役割":"role","入手方法":"access",
     "URL（直リンク）":"url","備考・抽出ポイント":"note",
+    "進捗":"sheetStatus",
   };
   const out = {};
   for (const [k,v] of Object.entries(row)) {
@@ -94,7 +97,14 @@ export default function App() {
         setRawData(data);
         setStatuses(prev => {
           const next = {...prev};
-          data.forEach(d => { if (!next[d.id]) next[d.id] = "未着手"; });
+          data.forEach(d => {
+            // スプレッドシートの値を優先、なければlocalStorage値、なければデフォルト
+            if (d.sheetStatus) {
+              next[d.id] = d.sheetStatus;
+            } else if (!next[d.id]) {
+              next[d.id] = "未着手";
+            }
+          });
           return next;
         });
         setLastFetch(new Date().toLocaleTimeString("ja-JP"));
@@ -109,6 +119,18 @@ export default function App() {
     const next = {...urlStatuses, [id]: status};
     setUrlStatuses(next);
     saveUrlStatuses(next);
+  };
+
+  // スプレッドシートに進捗を書き込む
+  const writeStatusToSheet = (id, status) => {
+    fetch(`${WRITE_GAS_URL}?action=updateStatus&id=${encodeURIComponent(id)}&status=${encodeURIComponent(status)}`)
+      .catch(e => console.warn("GAS write failed:", e));
+  };
+
+  // 進捗変更：ローカルstateとスプレッドシートの両方を更新
+  const handleStatusChange = (id, newStatus) => {
+    setStatuses(p => ({...p, [id]: newStatus}));
+    writeStatusToSheet(id, newStatus);
   };
 
   const toggle = (arr,setArr,v) => setArr(arr.includes(v)?arr.filter(x=>x!==v):[...arr,v]);
@@ -468,7 +490,7 @@ export default function App() {
                         {d.url&&<><a href={d.url} target="_blank" rel="noreferrer" style={{display:"inline-block",padding:"2px 7px",borderRadius:4,background:"#E3F2FD",color:"#1565C0",fontSize:10,fontWeight:500,textDecoration:"none"}}>開く</a><UrlBadge id={d.id}/></>}
                       </td>
                       <td style={{padding:"6px 10px"}} onClick={e=>e.stopPropagation()}>
-                        <select value={statuses[d.id]||"未着手"} onChange={e=>setStatuses(p=>({...p,[d.id]:e.target.value}))} style={{fontSize:11,border:"0.5px solid #ddd",borderRadius:4,padding:"2px 4px",cursor:"pointer",background:stCfg.bg,color:stCfg.text}}>
+                        <select value={statuses[d.id]||"未着手"} onChange={e=>handleStatusChange(d.id, e.target.value)} style={{fontSize:11,border:"0.5px solid #ddd",borderRadius:4,padding:"2px 4px",cursor:"pointer",background:stCfg.bg,color:stCfg.text}}>
                           {Object.keys(STATUS_CFG).map(s=><option key={s}>{s}</option>)}
                         </select>
                       </td>
@@ -513,7 +535,7 @@ export default function App() {
           <div style={{marginBottom:10}}><div style={{fontSize:10,color:"#bbb",fontWeight:500,letterSpacing:0.6,textTransform:"uppercase",marginBottom:3}}>種別</div><div style={{fontSize:11,color:"#555"}}>{sel.type}</div></div>
           <div style={{marginBottom:12}}><div style={{fontSize:10,color:"#bbb",fontWeight:500,letterSpacing:0.6,textTransform:"uppercase",marginBottom:3}}>抽出ポイント</div><div style={{fontSize:11,lineHeight:1.6,color:"#444",background:"#F8F9FA",borderRadius:6,padding:"8px 10px",borderLeft:"2px solid #E0E0E0"}}>{sel.note}</div></div>
           <div style={{marginBottom:12}}><div style={{fontSize:10,color:"#bbb",fontWeight:500,letterSpacing:0.6,textTransform:"uppercase",marginBottom:5}}>進捗ステータス</div>
-            <select value={statuses[sel.id]||"未着手"} onChange={e=>setStatuses(p=>({...p,[sel.id]:e.target.value}))} style={{width:"100%",fontSize:12,border:"0.5px solid #ddd",borderRadius:6,padding:"6px 8px",cursor:"pointer",background:STATUS_CFG[statuses[sel.id]]?.bg||"#F5F5F5",color:STATUS_CFG[statuses[sel.id]]?.text||"#757575"}}>
+            <select value={statuses[sel.id]||"未着手"} onChange={e=>handleStatusChange(sel.id, e.target.value)} style={{width:"100%",fontSize:12,border:"0.5px solid #ddd",borderRadius:6,padding:"6px 8px",cursor:"pointer",background:STATUS_CFG[statuses[sel.id]]?.bg||"#F5F5F5",color:STATUS_CFG[statuses[sel.id]]?.text||"#757575"}}>
               {Object.keys(STATUS_CFG).map(s=><option key={s}>{s}</option>)}
             </select>
           </div>
