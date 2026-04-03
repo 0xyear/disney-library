@@ -1,7 +1,6 @@
 import { useState, useMemo, useEffect } from "react";
 
-const GAS_URL = "https://script.google.com/macros/s/AKfycbzuQ1JVabLW4uQLqU4DJQ3cvLXA4xqxNaOVDFTlTosTyMIklYuWg8l63iay9zoBxwH9/exec";
-
+const GAS_URL = "/api/data";
 const RANK_CFG = {
   S:{label:"S — 本人肉声",bg:"#FFF3E0",border:"#E65100",text:"#E65100",pill:"#FFD0A0"},
   A:{label:"A — 直接引用",bg:"#E8F5E9",border:"#2E7D32",text:"#1B5E20",pill:"#A5D6A7"},
@@ -11,7 +10,7 @@ const RANK_CFG = {
 const ACCESS_CFG = {
   "無料":     {bg:"#E8F5E9",text:"#1B5E20"},
   "サブスク": {bg:"#E3F2FD",text:"#0D47A1"},
-  "有料購入": {bg:"#FFF3E0",text:"#E65100"},
+  "有料購入": {bg:"#FFF3E0",text:"#E65100"}
   "要申請":   {bg:"#FCE4EC",text:"#880E4F"},
 };
 const STATUS_CFG = {
